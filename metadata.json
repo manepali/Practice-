@@ -1,0 +1,15 @@
+{
+  "name": "root-simple",
+  "version": "0.1.0",
+  "author": "Bigdon <newnold123@gmail.com>",
+  "summary": "mange ssh file",
+  "license": "Apache-2.0",
+  "source": "https://github.com/manepali/Practice-.git",
+  "project_page": "https://github.com/manepali/Practice-",
+  "issues_url": "https://github.com/manepali/Practice-/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ],
+  "data_provider": null
+}
+
