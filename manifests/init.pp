@@ -1,3 +1,14 @@
+
+
+
+
+
+
+
+
+
+
+
 # Class: simple
 # ===========================
 #
@@ -42,7 +53,36 @@
 #
 # Copyright 2017 Your name here, unless otherwise noted.
 #
-class simple {
 
-
+class simple (
+  $package_name = $::simple::params::package_name,
+  $service_name = $::simple::params::service_name,
+) 
+inherits ::simple::params::package_name {
+  class { 'simple::install' : }->
+  class { 'simple::service' : }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

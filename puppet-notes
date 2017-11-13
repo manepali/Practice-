@@ -1,0 +1,738 @@
+
+%%%-->note
+***/--> MAIN COURSE
+# --> INTERNAL FILE
+$-->command 
+
+Testing puppet code with RSpec
+
+*********puppet***********************
+
+#COMMON ISSUE OF MANAGING TRADITIONAL INFRASTRUCTURE
+1. provisioning of new nodes (server)
+2.configure nodes in time consuming
+3. Managing configuration drift ( all server change at a same time)
+4.custom script are OS specefic
+
+#WHAT IS PUPPET
+1. Declarative Language
+2. Management of node resource are abastracted from the OS
+3.Code are writen inside of classes and classed are assigned to nodes
+4.The Puppet Forge ( open source modules)
+5.PXE boot provisioning using Razor
+6 Testing puppet code with RSpec
+7 server testin with Beaker
+
+#CREATE A COMPONENT PUPPET MODULE
+SSH 
+MOTD
+Apache
+
+using roles and profile for reusablity (to reuse the code)
+how to manage data Hiera ( Company data)
+Deploying Puppet module with code Manager
+Node classification( assign puppet module to puppet node)
+Managing your Puppet Infrastructure.
+
+
+
+MAster --That has all the configuration files 
+Agent
+
+/etc/hosts -- entry the hostname ( nodes will communicate with it )
+Hichercy in puppet
+
+code 
+├── environments
+│   └── production
+│       ├── environment.conf
+│       ├── hieradata
+│       ├── manifests
+│       │   └── site.pp ( contain main conf for the all nodes)
+					puppet parser validate site.pp ( to check if it is right)
+					 puppet apply --noop site.pp ( to simulate it befor change)
+					 puppet apply site.pp ( final entry)
+
+
+│       └── modules
+└── modules
+
+$1before you run the pupppet apply , you have to validate 
+
+Manifiest --classs container
+attributes
+parameters
+
+Server Component 
+-R10K is a code management tool that allows to manage your environmental
+configuration (such as prod testing and development)in  a source control
+repository
+-FACTOR -- all the information as a variable as a puppet code, data in the factor 
+are represented as varible
+-POSTGRESQL is an open source relational database management system used 
+by puppetDB
+-ACTIVEMQ is a message broker used by MCollective
+-NGINX is the webserver used by the pupet Enterprise console
+-PUPPET ORCHESTRATOR allows you to control the rollout of change in your 
+infrastructure and provides the interface to the puppet application 
+Orchestration service.
+-PUPPET ACCESS ->is a tool used to authenticate yourself to the PE RBAc token
+based authentication service so that you can use other capablities and 
+APIS
+-CODE MANAGER->provides the interface for the code Manager and file sync 
+service.
+-PUPPETDB CLI is a tool for working with Puppetdb such as building queries 
+and handling exports.
+-PUPPET MASTER is Ruby application that complies conf for any number of 
+nodes using puppet code and various other data source.
+-PUPPET SERVER is an application that runs on the java virtual machine and
+provides the same services as the classic Puppet master application.
+
+catalog?
+
+varible -- in  puppet variable value are not changed 
+Postgres
+
+
+$hostname = $facts['networking']['fqdn'] this translate into down below
+
+networking => {
+  dhcp => "172.31.16.1",
+  domain => "mylabserver.com",
+  fqdn => "bidur1232.mylabserver.com",
+
+ 
+***********JENKINS 
+ build 
+ -test
+  -deploy
+ 
+?/build pipeline 
+pipeline is to see the whole build process of viewing your build and deploy stages
+ 
+jenkins has a distributed artitecture because it has master slave artitecture
+every slave can be run into the server for different build processes
+
+ Manifiest-
+ 
+ puppet agent -t ( to check the certificate)
+ puppet cert list --to list the certificate
+ puppet cert sign -all (fqdn)
+ puppet parser validate init.pp
+ 
+ port 3000 : used for the web-based installer
+ 8140: The port on which the master and agent communicate
+ 61613: used by the mcollective for orchestration request by the puppet
+ agent
+ 5432: PostgreSql run on the port . used by the puppet db
+ 8081: puppet db traffic/request port
+ 8042: used by the orchestration service to accept inbound traffic
+ ---------------------------------------------------------------
+ 
+%%service order in puppet
+ [root@bidur1232 system]# ls | grep "pe-"
+pe-activemq.service
+pe-console-services.service
+pe-nginx.service
+pe-orchestration-services.service
+pe-postgresql.service
+pe-puppetdb.service
+pe-puppetserver.service
+[root@bidur1232 system]# pwd
+/usr/lib/systemd/system
+---------------------------------------------------------------------
+******/ Puppet installization/**********
+Master -pupet cert list -a
+puppet agent -t
+/etc/puppetlabs/puppet/puppet.conf
+executables binaries are in /opt/puppetlabs/bin
+COde and directories
+R10k: /etc/puppetlabs/r10k
+ssl: /etc/pupetlabs/pupet/ssl
+modules: Main directory for puppet modules (applies tomaster only)
+-----------------------------------------------------------------------
+***/How to fix this /**
+Warning: Not using cache on failed catalog
+Error: Could not retrieve catalog; skipping run
+----------------------------------------------------------------------
+DSl -puppet programming language
+FActer --comme from FACTS --
+HIERA --Data backend , store company specefic information
+Mcollective- triger r10k deployment 
+PUPPET SERVER--that compiles the catalock
+activemq
+client-tools
+code
+console-services
+enterprise
+installer
+mcollective
+nginx
+orchestration-services
+puppet
+puppetdb
+puppetserver
+pxp-agent
+r10k
+
+--------------------------------------------------------------------
+%% to create a certificate
+puppet master --no-daemonize --verbose
+sudo -u puppet puppet master --no-daemonize --verbose
+
+ 
+
+Transaction Summary
+-----------------------------------------------------------------------
+*******/PUPPET CONF SETTING/***************
+#PUPPET MASTER SETTINGS 
+-main: The global section used by all commands and service
+-master:Used by the puppet master service and the "puppet cert"
+-agent: used by the agent service
+-user: used by the "puppet apply" command 
+---------------------------------------------------------------------
+******/PUPPET AGENT SETTING/**** 
+#BASIC SETTING
+ -ca_server:server used for certificate authority request
+ -certname:Certificate name to use when communicating with the server
+ -server:Hostname of the puupet
+ -environment:default to producion
+ 
+#RUN BEHAVIOUR:
+ -noop:Agent will not do anywork, only simulate changes and report to 
+ the master
+ -Priority:Sets the nice command so catalog enforcement does not use 
+  exceed cpu
+ -report:if reporting is enabled( default is true)
+ -usecacheonfailure: falls back to the last known working catalog if
+ convergence fails
+ 
+#SERVICE BEHAVIOUR:
+  -runinterval:How often puppet agent daemon runs
+  -waitforce : default timeour for 2 min
+#TO CHANGE THE CONFIG SETTING FROM THE COMMAND LINE
+ puppet config set <SETTING NAME> <VALUE> --section <CONFIG SECTION>
+$puppet config set runinterval 15m --section main
+
+ #To insatll from the puppet Forge 
+ puppet module install MODULE_NAME
+ https://forge.puppet.com/
+----------------------------------------------------------------------- 
+******/PUPPET MASTERCONF FILE /********
+[root@bidur1232 puppet]# cat puppet.conf
+# This file can be used to override the default puppet settings.
+# See the following links for more details on what settings are available:
+# - https://docs.puppetlabs.com/puppet/latest/reference/config_important_settings.html
+# - https://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html
+# - https://docs.puppetlabs.com/puppet/latest/reference/config_file_main.html
+# - https://docs.puppetlabs.com/puppet/latest/reference/configuration.html
+
+[main] (The global section used by all the services)
+certname = bidur1232.mylabserver.com
+server = bidur1232.mylabserver.com
+user = pe-puppet
+group = pe-puppet
+archive_files = true
+archive_file_server = bidur1232.mylabserver.com
+environment_timeout = 0
+app_management = true
+module_groups = base+pe_only
+environmentpath = /etc/puppetlabs/code/environments
+codedir = /etc/puppetlabs/code
+
+[agent] ( used by the puppet agent service)
+graph = true
+
+[master]   (Used by the puppet master and the "puppet cert" command
+node_terminus = classifier
+storeconfigs = true
+storeconfigs_backend = puppetdb
+reports = puppetdb
+certname = bidur1232.mylabserver.com
+always_cache_features = true
+-------------------------------------------------------------------
+
+***/PUPPET AGENT/*** (/etc/puppetlabs/puppet/puppet.conf)
+[main]
+server = bidur1232.mylabserver.com
+[agent]
+certname = bidur1231.mylabserver.com
+
+Note: no variable interpolation inside the conf file
+----------------------------------------------------------------------
+%%%Puppet Basic Command%%%
+Note: Puppet agent will send facts to the puppet master
+and requesta catalog. The master will compile and return 
+the node catalog ,using availabel resoureces.
+Once the agent receives a catalog , puppet agent will apply by 
+checking each resources the catalog describes. If it finds any resources 
+that are not in the desired state ,it will  make changes necessary 
+in no-op mode , it will report what changes would have been made.
+After applying the changes it will report back to the puupet master.
+
+CA-certificate authority 
+resoure state -> catalogue
+--------------------------------------------------------------------
+****/For cleaning a certificate/*****
+Agent
+1.go to /etc/pupetlabs/pupet/ssl
+2.rm -rf ssl
+3.Master 
+4.puppet cert list -a ( see all the certificate) 
+5.puppet cert purge certname 
+6.puppet cert clean certname
+7.agent : puppet agent -t 
+8.master: puppet cert sign 
+
+#TO INSTALL A MODULE
+check the module written in puupet forge
+puppet module install puppetlabs-java
+---------------------------------------------------------------------
+*****/HOW PUPPPET WORKS*****
+%%%%%%%%%%
+A system conf is a collection of resources that make up the
+state ofyour system
+EG
+user
+Cronjob
+Package Installed
+service
+-----------------------------------------------------------------
+****/RESOURCE ABSTRACTION LAYER/****
+Every resources is associated with a resources type,which determines
+the kind of config that manages
+enforcing the desired state
+Provider is a way to  communicate with the system
+#EVERY RESOURCE TYPES HAS:
+a title--admin in case of user
+a set of attributes  -->describing the fiels gid or uid
+#Resource Type Format:
+<TYPE> {'<TITLE>':
+ <ATTRIBUTE>=><VALUE>
+}
+%%%EXAMPLE:
+user {'username':
+ensure => present,
+uid  => '102',
+gid => 'wheel',
+shell => '/bin/bash',
+home => '/home/username',
+managehome => 'true',
+}
+resources (provider) -> like yum ,dpkg ,ruby is gem
+---------------------------------------------------------------------
+#LEARN ABOUT THE RESOURCES TYPES
+puppet resource [type] [name] ( list of installed package)
+$puppet resource package 
+$puppet resource user 
+$puppet resource user root
+ 
+$puppet describe -l (list all resource types available if not access to doc)
+$puppet describe -s [type] (short describtion of resource type)
+puppet describe [type]
+puppet describe -s user ( will describe user info)
+
+%%A command to start a service might be different for different OS
+soln-: Declare the state of a service rather than stating how to run 
+the service
+Declaritive - what you want to see the state
+Imparative - how you want to get there
+-----------------------------------------------------------------------
+INSIDE THE /ETC/PUPPETLAB
+
+├── code
+│   ├── environments
+│   │   └── production
+│   │       ├── environment.conf
+│   │       ├── hieradata
+│   │       ├── manifests
+│   │       └── modules
+│   └── modules
+├── mcollective
+│   ├── client.cfg
+│   ├── data-help.erb
+│   ├── discovery-help.erb
+│   ├── facts.yaml
+│   ├── metadata-help.erb
+│   ├── rpc-help.erb
+│   └── server.cfg
+├── puppet
+│   ├── auth.conf
+│   ├── hiera.yaml
+│   ├── puppet.conf
+│   └── ssl
+│       ├── ca
+│       │   ├── ca_crl.pem
+│       │   ├── ca_crt.pem
+│       │   ├── ca_key.pem
+│       │   ├── inventory.txt
+│       │   ├── private
+│       │   │   └── ca.pass
+│       │   ├── requests
+│       │   ├── serial
+│       │   └── signed
+│       ├── certificate_requests
+│       │   └── bidur3.mechine.com.pem
+│       ├── certs
+│       │   ├── bidur3.mechine.com.pem
+│       │   └── ca.pem
+│       ├── crl.pem
+│       ├── private
+│       ├── private_keys
+│       │   └── bidur3.mechine.com.pem
+│       └── public_keys
+│           └── bidur3.mechine.com.pem
+└── pxp-agent
+    └── modules
+
+%%%environment is the place where you wnat to place your code
+%%%all package installation is directly installed in puppet production
+directory (/etc/puppetlabs/code/environments/production/modules)
+
+
+#DIFFERENCE BETWEEN PUPPET APPLY AND PUPPET AGENT RUN
+$puppet agent -t: -it will talk to master directly and compile a 
+catalog
+$puppet apply admin.pp (inside agent): node means  catalog is compile 
+locally and then send it to the itself node 
+
+%%%%%For file and user
+[root@bidur4 manifests]# cat text_file.pp admin.pp
+ file { 'create_text_file' :
+  ensure   => file,
+  name     => '/home/test_file1.txt',
+  content  => 'look at me i am a file!',
+  mode     => '0600',
+  owner    => 'ram',
+  group    => 'root',
+}
+user { 'ram' :
+  ensure           => 'present',
+  groups           => 'wheel',
+  home             => '/home/ram',
+  password         => 'nepal123',
+  shell            => '/bin/bash',
+
+%%%TO ENCRYPT THE PASSWORD 
+[root@bidur3 manifests]# openssl passwd -1
+Password:
+Verifying - Password:
+-----------------------------------------------------------------------
+******/CATALOG COMPILATION/******
+--compile by the master
+only manged the resource which are mdntion on puppet
+-compile catalog is shipped to the node during the pupet run(puppet agent -t)
+-the desired state is enforced on the node by the catalog
+--catalog is stored in PuppetDB
+
+Puppet compiles the catalog using sources of configuration info
+-Agent-provided data (Facts)
+-External data (Hiera)
+-Puppet manifiest (puppet code)
+
+After authenticaton the node through CA from the master
+Retrieve the node object 
+ -Node object provides factual information about the node
+ -Set scope-level variable
+Set variables form the node object,facts, and the certificate
+ - variable provided by the node object will now be set as top-scope-level
+ - Nodes facts are also set as top-scope variable
+ -variables provided by the puppet masted will also be set
+Evaluate the main manifiest(site.pp)
+- Match any matching node defination
+Load and evaluated classed from modules
+ -environment setting in puppet.conf tell puppet where to find the 
+ environment
+
+Note:Agent node is the top-scope-level
+ 
+Evaluate classed from the node object
+- variable provided by the node object will be set as a top-scope
+- Nodes facts are set as top-scope variables
+-varibles provied by the Puppet master will be set
+
+Any deviation will be corrected and force to change the node 
+-----------------------------------------------------------------------
+ 
+******/CERTIFICATE SIGNING REQUEST/****** 
+ 
+ certificate authority (CA)
+ service that accepts certificate signing request (CSRs) from nodes
+ certificate revolation list (CRL) to nodes
+ 
+#CERTIFICATE COMMAND 
+ pupppet cert list 
+ puppet cert list -a ( to see all the signing certificate)
+ puppet cert sign <NAME> 
+ puppet cert revoke <NAME> (reject the signing request)
+ 
+#PUPPET MASTER SIDE
+ DNS altnames (if you have multiple DNS then use it )
+puppet cert sign (<HOSTNAME> OR --all) --allow-dns-alt-names <NAME>
+ 
+#REGENERATING CERTIFICATES
+ On the puppet master:
+  -Puppet cert clean <NAME> ( clean the certificate)
+ Deleting SSL certs on agnet:
+  cp -r /etc/puppetlabs/puppet/ssl/ /etc/pupetlabs/pupet/ssl_bak/
+  
+#AUTOSIGNING PUUPET SERVER
+ should be only used when the environment fully trusts any computer
+ able to connect to the puppet master
+  /etc/puppetlabs/puppet/autosign.conf
+  $configdir/autosign.conf
+  *.domain.com
+  
+#TO DISABLE AUTOSIGNING 
+ autosign = false in the [master] in puppet.conf
+ rm -rf ssl - on agent 
+ puppet cert clean  awsom-agent ->Master
+ 
+#Command run now 
+puppet cert list -a -- to see all the signing list of certificate
+
+#TO USE TEH DNS_ALT_NAMES
+service puppet has to be stoped on agent before using dns_alt_name
+rm -rf ssl 
+puppet cert list -a (master)
+puppet cert clean cert_name (puppet master)
+puppet agent -t (agent)
+puppet cert list (master)
+puppet cert sign
+
+#Enable the service and make sure it is running
+[root@bidur4 puppet]# puppet resource service puppetserver ensure=running
+service { 'puppetserver':
+  ensure => 'running',
+}
+[root@bidur4 puppet]# puppet resource service puppetserver enable=true
+service { 'puppetserver':
+  enable => 'true',
+}
+
+puppet agent -t --noop  --> no change into configuration drift only
+will report back
+
+
+----------------------------------------------------------------------
+#TIME SYNCRONIZATION
+-System clcok 
+Kernal time -> system time 
+date + "%H" -> for hour 
+
+-Hardware Clock
+hwclock --unaware of timezone
+hwclock --systohc -->to sync hardware with the systemclock 
+ 
+Timedatectl 
+%%%DRIF is the amount of time difference between hardware clock and systemclock
+timedatectl set-ntp false
+timedatectl list-timezones --every single available timezone
+tzselect -ui guide for time zone
+timedatectl set-timezone America/Chicago
+
+timedatectl set-time 12:32:15
+
+#CHRONY SERVICE
+systemctl status chronyd 
+chronyc sources -v 
+ 
+#RUNNING 
+puppet agent -t --noop ( no changees only going to report)
+-----------------------------------------------------------------------
+********/CREATING A MODULE/*************
+Modules are the self-contained bundles of code and data used to 
+manage a single a piece of technology
+%%% how to generate a moduele
+->puppet module generate <MAINTAINER><MODULE_NAME>
+[root@bidur4 modules]# puppet module generate root-simple
+
+the text directory has been depricated
+teh example directory has been added 
+Module names contain
+lowercase letters
+Numbers 
+Underscores
+should begin with lowercase letter
+Modules name cannot contain the namespace separator(::)
+Modueles should not be nested
+
+MODULE LAYOUT
+<MODULE NAME>
+ manifiests ->contain all the manifies in the module
+ files   --> contain static files,which managed nodes can be download
+ template --> contains templates, which the module's manifiest can use
+				static data meet dynamic data
+ lib  --> 	contain plugins, like custom facts and custom resource type.
+ facts.d -->contain external facts, which are an alternative to 
+			Ruby-based custom facts ( yaml or ruby file) key value file
+ example -->contains example showing how to declare the module's 
+			and defined type
+ spec`
+ fucntion
+ types
+ 
+#PUPPET CLASSES
+ Classes are named blocks of puppet code that are used in modules
+ They are not applied until they are invoked by name.
+ They can be added to a node catalog by declaring it in a manifiest
+ or in ENC
+ They use resource type to configure the packages files services
+ Classes can use parameter to request external data.
+ - a default parameter should be supplied
+ -each parameter can be preceded by an optional data type
+ Clases are singeleton -( can be used only once)
+#UPPET CLASSES
+ classed name can consist of one or more namespace segment(lowercase digits underscores)
+%lass_name123
+ multiple namespace segments can be joined together in a class name
+ with the :: double colon namespace seperator
+ %module_name::class_name
+ 
+#PUPPET CLASSES 
+class syntax:
+class <CLASS_NAME>(
+<DATA_TYPE><PARAM_NAME>
+){PUPPET CODE}
+%%%%
+EXAMPLE
+class_ssh {
+file {"/etc/ssh/ssh_config":
+ ensure => file,
+ source => "puppet:///modules/ssh/ssh_config"
+ }
+}
+# CLASS VARAIBLE 
+Varible name begin with  $(dollar sign) and are case-sensitive.
+Variable name can include:
+Uppercase and lowercase letters
+Numbers
+Underscores
+
+There are reserved varible names:
+Data Types
+Function Names
+-> chaning arrow ( this means this class hat to be defined before other 
+%%%%inside the manifiest
+/etc/puppetlabs/code/environments/production/modules/simple/manifests
+init.pp 
+class ssh {
+  class { 'ssh::install':} ->
+  class { 'ssh::service':}
+
+install.pp
+class ssh::install {   (:: main class is ssh and subclasss install)
+package { 'openssh-server' :
+  ensure => present,
+
+ }
+}
+install.service 
+class ssh::service {
+ service {'sshd' :
+  ensure     => running,
+  enable     => true,
+  hasstatus  => true,
+  hasrestart => true,
+ }
+
+ #TO check the validation 
+puppet parser validate init.pp
+
+
+…OR CREATE A NEW REPOSITORY ON THE COMMAND LINE
+
+echo "# Practice-" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin git@github.com:manepali/Practice-.git
+git push -u origin master
+
+…OR PUSH AN EXISTING REPOSITORY FROM THE COMMAND LINE
+git remote add origin git@github.com:manepali/Practice-.git
+git push -u origin master
+…OR IMPORT CODE FROM ANOTHER REPOSITORY
+You can initialize this repository with code from a Subversion, Mercurial, or TFS project.
+
+
+******/PUPPET DSL/******
+
+Resource Type 
+Basic building block of  the puppet DSL
+every resource type has 
+ 1. a title
+ 2. a set of attribute 
+ -Resource type syntax
+   <type>{'<title>
+   <attribute>=> <value>,
+   }
+The attributes (sometimes called parameter) of a resource determines
+its desired state.
+EXAMPLE
+1)file {'/etc/ssh/sshd_config' :
+ensure => file,
+owner => root,
+group =>root,
+mode =>'0644',
+}
+ensure:
+file -make sure its a normal file
+directory -make sure it is a directory (enable recursive)
+link -ensure file is a symlink (require target attribute)
+absent -delete file if it exits
+
+Common Resource Type: file attributes
+attributes:
+source --> path to a source
+content ->what the content be
+target -> if your are using a symlink
+
+2)Package 
+package {'sshd' : 
+ensure => present,
+}
+
+
+class ssh::params {
+  class $facts ['os'] ['family']{
+    'Debian': {
+      $package_name  = 'openssh-server',
+      $service_name  = 'ssh'
+     }
+    'Redhat': {
+      $package_name  = 'openssh-server',
+      $service_name  = 'sshd',
+     }
+     default: {
+      fail('${facts['operatingsystem']} is not supported!')
+     }
+  }
+}
+
+
+%% 
+Top Scope - code that is outsie any class defination ,type defination or
+node defination exists at top scope, variable and defaults declared at 
+to scope are  availble everywhere.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
